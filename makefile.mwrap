@@ -1,0 +1,84 @@
+#
+#  Generate Matlab/Octave MEX files
+#
+#  gfortran > 4.4.0 is strongly recommended
+#
+
+PROJECT = rotgrid_r2014a
+MEX_GATEWAY = $(PROJECT)
+
+
+###TARGET=octave-linux
+TARGET=octave-linux-openmp
+###TARGET=matlab-linux-a64
+###TARGET=matlab-linux-a64-openmp
+###TARGET=matlab-maci
+###TARGET=matlab-maci-openmp
+###TARGET=matlab-windows-w32
+###TARGET=matlab-windows-w32-openmp
+###TARGET=matlab-windows-w64
+###TARGET=matlab-windows-w64-openmp
+
+include mwrap.inc
+
+
+
+.f.$(OBJSUF):
+	$(MEX_FC) $(MEX_FLAGS) -c $(FFLAGS) $<
+
+.c.$(OBJSUF):
+	$(MEX_CC) $(MEX_FLAGS) -c $(CFLAGS) $<
+
+.SUFFIXES: .$(OBJSUF) .f .c
+
+
+# SOURCE FILE LIST
+#
+vpath %.f .:./src:../nufft1d:../nufft2d
+
+FSRCS = rotproj_cmpl.f rotviarecur3.f \
+        dfft.f fftnext.f yrecursion.f
+
+FSRCS += rotproj_real.f rotviarecur3_real.f
+
+FSRCS += rotproj_cmpl2.f rotproj_real2.f 
+
+FSRCS += rotproj_cmpl3.f rotmat_proj.f
+
+FSRCS += rotviarecur3f.f rotviarecur3f_real.f
+
+FSRCS += sphtrans.f sphtrans_real.f legeexps.f chebexps.f prini.f
+
+FSRCS += rotgrid.f shiftphase.f 
+
+FSRCS += nufft1df90.f nufft2df90.f nufft1dvf90.f next235.f
+
+FSRCS += nufft1df90_kb.f nufft2df90_kb.f i0eva.f
+
+FSRCS += rotgrid_aux.f
+
+FSRCS += gaussq.f
+
+#
+# object files list
+OBJS    = $(FSRCS:.f=.$(OBJSUF)) 
+#
+
+all: $(OBJS) 
+	$(MW) $(MWFLAGS) $(MEX_GATEWAY) -mb $(PROJECT).mw
+	$(MW) $(MWFLAGS) $(MEX_GATEWAY) -c $(MEX_GATEWAY).c $(PROJECT).mw
+	$(MEX) -v -DMWF77_UNDERSCORE1 $(MEX_FLAGS) $(MEX_LINK) $(MEX_GATEWAY).c $(OBJS) $(MEX_LIBS)
+
+doc:
+	$(MW) $(MWFLAGS) $(MEX_GATEWAY) -mb $(PROJECT).mw
+
+#
+clean: 
+	rm -f $(OBJS)
+# 
+list: $(FSRCS)
+	echo $^
+#
+distclean: 
+	rm -f $(OBJS) int2 fort.* *.o
+

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+#
+# sed: stream editor demo 
+#
+
+while
+  test -n "$1"
+do
+  echo "$1 "
+#  sed s/"sphtrans_cmpl_init"/"sphtrans_cmpl_lege_init"/g  < $1 > __$1
+#  sed s/"sphtrans_cmpl_brute"/"sphtrans_cmpl_lege_brute"/g  < __$1 > ___$1
+  sed s/"wfft"/"fsr"/g  < $1 > ___$1
+  mv -f ___$1 $1
+  shift
+done
+
+

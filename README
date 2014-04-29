@@ -1,0 +1,88 @@
+cc Contact: zydrunas.gimbutas@gmail.com
+
+Release 3.0, Apr 29, 2014
+
+This directory contains Matlab codes for fast grid rotation method on
+a sphere.  The algorithm contructs a set of grids, obtained by rotating
+the original grid by nphi uniformly spaced angles phi.
+
+This release contains optional calls to the nonuniform FFT in two
+dimensions for testing/timing purposes, and should handle odd number
+of nphi in the initial grid correctly. The naming of routines has been
+slightly changed, the main routines now have the 'rotgrid' prefix.
+
+References:
+
+Z. Gimbutas and S. Veerapaneni, "A Fast Algorithm for Spherical Grid
+Rotations and its Application to Singular Quadrature", SIAM Journal on
+Scientific Computing, Vol. 35(6), 2013, pp. A2738-A2751.
+
+====
+
+The package requires nuFFT 1D and 2D packages 
+http://www.cims.nyu.edu/cmcl/nufft/nufft.html
+
+cc Copyright (C) 2004-2009: Leslie Greengard and June-Yub Lee 
+cc Contact: greengard@cims.nyu.edu
+cc 
+cc This program is free software; you can redistribute it and/or modify 
+cc it under the terms of the GNU General Public License as published by 
+cc the Free Software Foundation; either version 2 of the License, or 
+cc (at your option) any later version.  This program is distributed in 
+cc the hope that it will be useful, but WITHOUT ANY WARRANTY; without 
+cc even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+cc PARTICULAR PURPOSE.  See the GNU General Public License for more 
+cc details. You should have received a copy of the GNU General Public 
+cc License along with this program; 
+cc if not, see <http://www.gnu.org/licenses/>.
+cc
+
+====
+
+rotgrid_ref_cmpl.m requires optimized shiftphase.m routines, 
+but it is easy to switch to regular Matlab by uncommenting 
+several lines above the shiftphase call.
+
+====
+
+To run a simple test, please type
+
+'octave test_rotgrid.m'
+
+from the command line or
+
+'test_rotgrid' 
+
+in Matlab
+
+
+The output should look as:
+
+nphi =  30
+ntheta =  30
+nphi1 =  30
+ntheta1 =  15
+nrot =  450
+Elapsed time is 0.01083 seconds.
+errors =
+
+ Columns 1 through 6:
+
+   9.1138e-14   9.5956e-14   9.7719e-14   9.9192e-14   9.7382e-14   9.8978e-14
+
+ Columns 7 through 12:
+
+   9.6945e-14   9.2933e-14   9.6933e-14   9.0302e-14   8.6574e-14   8.6283e-14
+
+ Columns 13 through 18:
+
+   8.1918e-14   8.0267e-14   8.1629e-14   8.0789e-14   7.8961e-14   7.8707e-14
+
+ Columns 19 through 24:
+
+   8.0565e-14   7.8953e-14   8.0139e-14   7.8398e-14   8.1377e-14   8.0041e-14
+
+ Columns 25 through 30:
+
+   7.8107e-14   7.8561e-14   8.2652e-14   8.1167e-14   8.5414e-14   9.1389e-14
+

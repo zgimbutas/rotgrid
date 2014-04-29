@@ -1,0 +1,1509 @@
+
+@function mpout=rotviaproj_cmpl(nterms,mpole,beta,alpha)
+%ROTVIAPROJ_CMPL Rotate the complex spherical harmonics expansion 
+%                about the y-axis.
+%
+%  MPOUT = rotviaproj_cmpl(NTERMS,MPOLE,BETA) rotates the complex spherical 
+%  harmonics expansion of degree NTERMS about the y-axis by degree BETA. 
+%
+%  MPOUT = rotviaproj_cmpl(NTERMS,MPOLE,BETA,ALPHA) 
+%     rotates the complex spherical harmonics expansion of degree NTERMS 
+%     about the z-axis by degree ALPHA and about the y-axis by degree BETA.
+%
+%  After rotation, the expansion pole is moved to location (beta, alpha) 
+%  in spherical coordinates (theta, phi).  
+%
+%  Both MPOUT and MPOLE are (NTERMS+1)-by-(2*NTERMS+1) complex matrices.
+%
+%
+%  Fast and stable algorithm for applying rotation operator about
+%  the y-axis determined by angle beta.
+%
+%  The method is based on computing the induced potential and
+%  its theta-derivative on the rotated equator
+%  for each order (first index). The coefficients of  the rotated
+%  expansion can then be obtained by FFT and projection.
+%
+%  There is some loss in speed over using recurrence relations 
+%  but it is stable to all orders whereas the recurrence schemes 
+%  are not.
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+if( nargin == 0 ), mpout=rotviaproj_cmpl_test(); return; end;
+
+m1=nterms;
+m2=nterms;
+
+mpout = zeros(nterms+1,2*nterms+1)+1i*zeros(nterms+1,2*nterms+1);
+
+lmp = nterms;
+lmpn = nterms;
+
+if( nargin == 3 ),
+# FORTRAN rotviaprojf90(double[1] beta, int[1] nterms, int[1] m1, int[1] m2, dcomplex[] mpole, int[1] lmp, inout dcomplex[] mpout, int[1] lmpn);
+end
+
+if( nargin >= 4 ),
+# FORTRAN rotviaproj2f90(double[1] beta, double[1] alpha, int[1] nterms, int[1] m1, int[1] m2, dcomplex[] mpole, int[1] lmp, inout dcomplex[] mpout, int[1] lmpn);
+end
+
+function mpout=rotviaproj_cmpl_test()
+
+nterms = 2;
+beta = pi/2;
+nrot = 2;
+
+mpole = zeros(nterms+1,2*nterms+1)+1i*zeros(nterms+1,2*nterms+1);
+
+j=nterms+1;
+mpole(1,j) = 1;
+mpole(2,j+(-1:1)) = 1; 
+mpole(3,j+(-2:2)) = 1; 
+
+mpout = rotviaproj_cmpl(nterms,mpole,beta);
+
+
+@function mpout=rotviarecur_cmpl(nterms,mpole,beta,m1,m2)
+%ROTVIARECUR Rotate the complex spherical harmonics about the y-axis. 
+%
+%  MPOUT = rotviarecur_cmpl(NTERMS,MPOLE,BETA) rotates the complex spherical 
+%  harmonics expansion of degree NTERMS about the y-axis by degree BETA. 
+%
+%  MPOUT = rotviarecur_cmpl(NTERMS,MPOLE,BETA,M1,M2) 
+%  rotates the complex spherical 
+%  harmonics expansion of degree NTERMS about the y-axis by degree BETA. 
+%  Only modes up to degree M1 in the input MPOLE expansion and modes up 
+%  to degree M2 in the output expansion MPOUT will be used. 
+%  
+%  Both MPOUT and MPOLE are (NTERMS+1)-by-(2*NTERMS+1) complex matrices.
+%
+%
+%  Fast, recursive algorithm for applying rotation operator about
+%  the y-axis determined by angle beta. It is good for NTERMS up to 100 or so.
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+if( nargin == 0 ), mpout=rotviarecur_cmpl_test(); return; end;
+
+if( nargin == 3 ),
+  m1=nterms;
+  m2=nterms;
+end;
+
+mpout = zeros(nterms+1,2*nterms+1)+1i*zeros(nterms+1,2*nterms+1);
+
+lmp = nterms;
+lmpn = nterms;
+
+# FORTRAN rotviarecur3f90(double[1] beta, int[1] nterms, int[1] m1, int[1] m2, inout  dcomplex[] mpole, int[1] lmp, inout dcomplex[] mpout, int[1] lmpn);
+
+function mpout=rotviarecur_cmpl_test()
+
+nterms = 2;
+beta = pi/2;
+nrot = 2;
+
+mpole = zeros(nterms+1,2*nterms+1)+1i*zeros(nterms+1,2*nterms+1);
+
+j=nterms+1;
+mpole(1,j) = 1;
+mpole(2,j+(-1:1)) = 1; 
+mpole(3,j+(-2:2)) = 1; 
+
+mpout = rotviarecur_cmpl(nterms,mpole,beta);
+
+
+@function mpout=rotviaproj_real(nterms,mpole,beta,alpha)
+%ROTVIAPROJ_REAL Rotate the real spherical harmonics expansion about the y-axis.
+%
+%  MPOUT = rotviaproj_real(NTERMS,MPOLE,BETA) rotates the real spherical 
+%  harmonics expansion of degree NTERMS about the y-axis by degree BETA. 
+%
+%  MPOUT = rotviaproj_real(NTERMS,MPOLE,BETA,ALPHA) rotates the real spherical 
+%  harmonics expansion of degree NTERMS about the z-axis by degree ALPHA 
+%  and about the y-axis by degree BETA.
+%
+%  After rotation, the expansion pole is moved to location (beta, alpha) 
+%  in spherical coordinates (theta, phi).  
+%
+%  Both MPOUT and MPOLE are (NTERMS+1)-by-(NTERMS+1) complex matrices.
+%
+%
+%  Fast and stable algorithm for applying rotation operator about
+%  the y-axis determined by angle beta.
+%
+%  The method is based on computing the induced potential and
+%  its theta-derivative on the rotated equator
+%  for each order (first index). The coefficients of  the rotated
+%  expansion can then be obtained by FFT and projection.
+%
+%  There is some loss in speed over using recurrence relations 
+%  but it is stable to all orders whereas the recurrence schemes 
+%  are not.
+%
+%  Our definition of real spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+if( nargin == 0 ), mpout=rotviaproj_real_test(); return; end;
+
+m1=nterms;
+m2=nterms;
+
+mpout = zeros(nterms+1,nterms+1)+1i*zeros(nterms+1,nterms+1);
+
+lmp = nterms;
+lmpn = nterms;
+
+if( nargin == 3 ),
+# FORTRAN rotviaproj_realf90(double[1] beta, int[1] nterms, int[1] m1, int[1] m2, dcomplex[] mpole, int[1] lmp, inout dcomplex[] mpout, int[1] lmpn);
+end
+
+if( nargin >= 4 ),
+# FORTRAN rotviaproj2_realf90(double[1] beta, double[1] alpha, int[1] nterms, int[1] m1, int[1] m2, dcomplex[] mpole, int[1] lmp, inout dcomplex[] mpout, int[1] lmpn);
+end
+
+function mpout=rotviaproj_real_test()
+
+nterms = 2;
+beta = pi/2;
+nrot = 2;
+
+mpole = zeros(nterms+1,nterms+1)+1i*zeros(nterms+1,nterms+1);
+
+j=1;
+mpole(1,j) = 1;
+mpole(2,j+(0:1)) = 1; 
+mpole(3,j+(0:2)) = 1; 
+
+mpout = rotviaproj_real(nterms,mpole,beta);
+
+
+@function mpout=rotviarecur_real(nterms,mpole,beta,m1,m2)
+%ROTVIARECUR_REAL Rotate the real spherical harmonics about the y-axis. 
+%
+%  MPOUT = rotviarecur_real(NTERMS,MPOLE,BETA) rotates the real spherical 
+%  harmonics expansion of degree NTERMS about the y-axis by degree BETA. 
+%
+%  MPOUT = rotviarecur_real(NTERMS,MPOLE,BETA,M1,M2) rotates the real spherical 
+%  harmonics expansion of degree NTERMS about the y-axis by degree BETA. 
+%  Only modes up to degree M1 in the input MPOLE expansion and modes up 
+%  to degree M2 in the output expansion MPOUT will be used. 
+%  
+%  Both MPOUT and MPOLE are (NTERMS+1)-by-(NTERMS+1) complex matrices.
+%
+%
+%  Fast, recursive algorithm for applying rotation operator about
+%  the y-axis determined by angle beta. It is good for NTERMS up to 100 or so.
+%
+%  Our definition of real spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+if( nargin == 0 ), mpout=rotviarecur_real_test(); return; end;
+
+if( nargin == 3 ),
+  m1=nterms;
+  m2=nterms;
+end;
+
+mpout = zeros(nterms+1,nterms+1)+1i*zeros(nterms+1,nterms+1);
+
+lmp = nterms;
+lmpn = nterms;
+
+# FORTRAN rotviarecur3f90_real(double[1] beta, int[1] nterms, int[1] m1, int[1] m2, inout  dcomplex[] mpole, int[1] lmp, inout dcomplex[] mpout, int[1] lmpn);
+
+
+function mpout=rotviarecur_real_test()
+
+nterms = 2;
+beta = pi/2;
+nrot = 2;
+
+mpole = zeros(nterms+1,nterms+1)+1i*zeros(nterms+1,nterms+1);
+
+j=1;
+mpole(1,j) = 1;
+mpole(2,j+(0:1)) = 1; 
+mpole(3,j+(0:2)) = 1; 
+
+mpout = rotviarecur_real(nterms,mpole,beta);
+
+
+
+
+@function [rotmat,P]=rotmat_proj_init(nterms,beta,alpha)
+%ROTMAT_PROJ_INIT Initialize the rotation matrices via stable projection scheme.
+%
+%  [ROTMAT,P] = rotmat_proj_init(NTERMS,BETA) initializes 
+%  the rotation matrices of degree NTERMS about the y-axis by degree BETA. 
+%
+%  [ROTMAT,P] = rotmat_proj_init(NTERMS,BETA,ALPHA) initializes 
+%  the rotation matrices of degree NTERMS about the z-axis by degree ALPHA 
+%  and about the y-axis by degree BETA. 
+%
+%  After rotation, the expansion pole is moved to location (beta, alpha) 
+%  in spherical coordinates (theta, phi).  
+%
+%  ROTMAT is (NTERMS+1)-by-(2*NTERMS+1)-by-(2*NTERMS+1) complex matrix.
+%
+%
+%  Fast and stable algorithm for initializing the rotation operator about
+%  the y-axis determined by angle beta. 
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+if( nargin == 0 ), rotmat_proj_init_test(); return; end;
+
+if( nargin < 3 ), alpha = 0; end;
+
+%%%rotmat = zeros(nterms+1,2*nterms+1,2*nterms+1);
+rotmat = zeros((nterms+1)*(2*nterms+1)*(2*nterms+1),1);
+
+ier = 0;
+# FORTRAN rotmat_projf90(double[1] beta, double[1] alpha, int[1] nterms, inout dcomplex[] rotmat, int[1] nterms);
+
+if( alpha == 0 ), rotmat = real(rotmat); end;
+
+if( nargout > 1 ),
+    rotmat = reshape(rotmat,nterms+1,2*nterms+1,2*nterms+1);
+    P = cell(nterms+1,1);
+    for i=1:nterms+1,
+       ind = nterms+1-i+1:nterms+1+i-1;
+       P{i}=squeeze(rotmat(i,ind,ind));
+    end
+end
+
+function rotmat_proj_init_test()
+
+nterms = 2
+beta = pi/2
+a=real(rotmat_proj_init(nterms,beta))
+
+for i=1:nterms+1,
+  squeeze(a(i,nterms+1-i+1:nterms+1+i-1,nterms+1-i+1:nterms+1+i-1))
+end
+
+
+@function mpout=rot1lat_proj_cmpl(nterms,mpole,beta,nrot)
+%ROT1LAT_PROJ_CMPL Rotate the complex spherical harmonics expansion.
+%
+%  MPOUT = rot1lat_proj_cmpl(NTERMS,MPOLE,BETA,NROT) rotates 
+%  the complex spherical harmonics expansion of degree NTERMS 
+%  about the z-axis by degree ALPHA_K and about the y-axis by degree BETA.
+%  into a collection of new pole locations (beta, alpha_k) in spherical 
+%  coordinates (theta, phi), where alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%
+%  The rotated poles form a uniformly spaced grid on lattitude \theta.
+%
+%  MPOLE is (NTERMS+1)-by-(2*NTERMS+1) complex matrix.
+%  MPOUT is (NTERMS+1)-by-(2*NTERMS+1)-by-NROT complex matrix.
+%
+%
+%  Fast and stable algorithm for rotating complex spherical harmonic expansions
+%  into locations (beta, alpha_k), where alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%
+%  The method is based on computing the induced potential and
+%  its theta-derivative on the rotated equator
+%  for each order (first index). The coefficients of  the rotated
+%  expansion can then be obtained by FFT and projection.
+%
+%  There is some loss in speed over using recurrence relations 
+%  but it is stable to all orders whereas the recurrence schemes 
+%  are not.
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+if( nargin == 0 ), mpout=rot1lat_proj_cmpl_test(); return; end;
+
+m1=nterms;
+m2=nterms;
+
+%%%mpout = zeros(nterms+1,2*nterms+1,nrot)+1i*zeros(nterms+1,2*nterms+1,nrot);
+mpout = zeros((nterms+1)*(2*nterms+1),nrot)*(1+1i);
+
+lmp = nterms;
+lmpn = nterms;
+
+# FORTRAN rotviaproj3f90(double[1] beta, int[1] nrot, int[1] nterms, int[1] m1, int[1] m2, dcomplex[] mpole, int[1] lmp, inout dcomplex[] mpout, int[1] lmpn);
+
+mpout=reshape(mpout,nterms+1,2*nterms+1,nrot);
+
+function mpout=rot1lat_proj_cmpl_test()
+
+nterms = 2;
+beta = pi/2;
+nrot = 2;
+
+mpole = zeros(nterms+1,2*nterms+1)+1i*zeros(nterms+1,2*nterms+1);
+
+j=nterms+1;
+mpole(1,j) = 1;
+mpole(2,j+(-1:1)) = 1; 
+mpole(3,j+(-2:2)) = 1; 
+
+mpole;
+
+mpout=rot1lat_proj_cmpl(nterms,mpole,beta,nrot);
+mpout=reshape(mpout,nterms+1,2*nterms+1,nrot);
+
+
+@function mpout=rot1lat_fsr_cmpl(nterms,mpole,beta,nrot,rotmat,ldc)
+%ROT1LAT_FSR_CMPL Rotate the complex spherical harmonics expansion.
+%
+%  MPOUT = rot1lat_fsr_cmpl(NTERMS,MPOLE,BETA,NROT,ROTMAT,LDC) rotates 
+%  the complex spherical harmonics expansion of degree NTERMS 
+%  about the z-axis by degree ALPHA_K and about the y-axis by degree BETA.
+%  into a collection of new pole locations (beta, alpha_k) in spherical 
+%  coordinates (theta, phi), where alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%
+%  The rotated poles form a uniformly spaced grid on lattitude \theta.
+%
+%  MPOLE is (NTERMS+1)-by-(2*NTERMS+1) complex matrix.
+%  MPOUT is (NTERMS+1)-by-(2*NTERMS+1)-by-NROT complex matrix.
+%
+%
+%  Fast, FFT-based algorithm for rotating complex spherical harmonic expansions
+%  into locations (beta, alpha_k), where alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%
+%  rotmat - The rotation operator for direction (beta,0). It must be initialized
+%     via a preceding call to real(rotmat_proj_init(ldc,beta)),
+%     Note, that this function expects real-valued rotation matrices, please
+%     take the real part of rotmat after the call to rotmat_proj_init, see
+%     the testing code below.
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+if( nargin == 0 ), mpout=rot1lat_fsr_cmpl_test(); return; end;
+
+m1=nterms;
+m2=nterms;
+
+%%%mpout = zeros(nterms+1,2*nterms+1,nrot)+1i*zeros(nterms+1,2*nterms+1,nrot);
+mpout = zeros((nterms+1)*(2*nterms+1),nrot)*(1+1i);
+
+lmp = nterms;
+lmpn = nterms;
+
+# FORTRAN rot1lat_wfft(double[1] beta, int[1] nrot, int[1] nterms, int[1] m1, int[1] m2, inout dcomplex[] mpole, int[1] lmp, inout dcomplex[] mpout, int[1] lmpn, double[] rotmat, int[1] ldc);
+
+mpout=reshape(mpout,nterms+1,2*nterms+1,nrot);
+
+
+function mpout=rot1lat_fsr_cmpl_test()
+
+nterms = 2;
+beta = pi/2;
+nrot = 2;
+
+mpole = zeros(nterms+1,2*nterms+1)+1i*zeros(nterms+1,2*nterms+1);
+
+j=nterms+1;
+mpole(1,j) = 1;
+mpole(2,j+(-1:1)) = 1; 
+mpole(3,j+(-2:2)) = 1; 
+
+mpole;
+
+ldc = nterms;
+rotmat = real(rotmat_proj_init(ldc,beta));
+
+mpout=rot1lat_fsr_cmpl(nterms,mpole,beta,nrot,rotmat,ldc);
+mpout=reshape(mpout,nterms+1,2*nterms+1,nrot);
+
+
+
+
+@function mpout=rot1lat_fsr_real(nterms,mpole,beta,nrot,rotmat,ldc)
+%ROT1LAT_FSR_REAL Rotate the real spherical harmonics expansion.
+%
+%  MPOUT = rot1lat_fsr_real(NTERMS,MPOLE,BETA,NROT,ROTMAT,LDC) rotates 
+%  the real spherical harmonics expansion of degree NTERMS 
+%  about the z-axis by degree ALPHA_K and about the y-axis by degree BETA.
+%  into a collection of new pole locations (beta, alpha_k) in spherical 
+%  coordinates (theta, phi), where alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%
+%  The rotated poles form a uniformly spaced grid on lattitude \theta.
+%
+%  MPOLE is (NTERMS+1)-by-(NTERMS+1) complex matrix.
+%  MPOUT is (NTERMS+1)-by-(NTERMS+1)-by-NROT complex matrix.
+%
+%
+%  Fast, FFT-based algorithm for rotating real spherical harmonic expansions
+%  into locations (beta, alpha_k), where alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%
+%  rotmat - The rotation operator for direction (beta,0). It must be initialized
+%     via a preceding call to real(rotmat_proj_init(ldc,beta)), 
+%     Note, that this function expects real-valued rotation matrices, please
+%     take the real part of rotmat after the call to rotmat_proj_init, see
+%     the testing code below.
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+if( nargin == 0 ), mpout=rot1lat_fsr_real_test(); return; end;
+
+m1=nterms;
+m2=nterms;
+
+%%%mpout = zeros(nterms+1,nterms+1,nrot)+1i*zeros(nterms+1,nterms+1,nrot);
+mpout = zeros((nterms+1)*(nterms+1),nrot)*(1+1i);
+
+lmp = nterms;
+lmpn = nterms;
+
+# FORTRAN rot1lat_wfft_real(double[1] beta, int[1] nrot, int[1] nterms, int[1] m1, int[1] m2, inout dcomplex[] mpole, int[1] lmp, inout dcomplex[] mpout, int[1] lmpn, double[] rotmat, int[1] ldc);
+
+mpout=reshape(mpout,nterms+1,nterms+1,nrot);
+
+
+function mpout=rot1lat_fsr_real_test()
+
+nterms = 2;
+beta = pi/2;
+nrot = 2;
+
+mpole = zeros(nterms+1,nterms+1)+1i*zeros(nterms+1,nterms+1);
+
+j=1;
+mpole(1,j) = 1;
+mpole(2,j+(0:1)) = 1; 
+mpole(3,j+(0:2)) = 1; 
+
+mpole;
+
+ldc = nterms;
+rotmat = real(rotmat_proj_init(ldc,beta));
+
+mpout=rot1lat_fsr_real(nterms,mpole,beta,nrot,rotmat,ldc);
+mpout=reshape(mpout,nterms+1,nterms+1,nrot);
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+@function [ctheta,whts,ynms,wsave]=sphtrans_cmpl_lege_init(nterms,nphi,ntheta)
+%
+%  Precompute parameters and tables for O(p^3) spherical transforms
+%  on Legendre spherical grid. Assumes a symmetric grid, only half of
+%  Legendre functions are stored.
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  nphi - the number of points in latitude discretization
+%  ntheta - the number of points in meridian discretization
+%       
+%  Output parameters:
+%       
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  whts - weights of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - initialized fftpack wsave array, complex *16 wsave(4*nphi+15)
+%
+ctheta = zeros(ntheta,1);
+whts = zeros(ntheta,1);
+ynms = zeros((nterms+1)^2,ntheta/2+1);
+wsave = zeros(4*nphi+15,1)+1i*zeros(4*nphi+15,1);
+
+# FORTRAN sphtrans_cmpl_lege_init(int[] nterms, int[] nphi, int[] ntheta, inout double[] ctheta, inout double[] whts, inout double[] ynms, inout dcomplex[] wsave);
+
+
+@function [ctheta,whts,ynms,wsave]=sphtrans_cmpl_cheb_init(nterms,nphi,ntheta)
+%
+%  Precompute parameters and tables for O(p^3) spherical transforms
+%  on Chebychev spherical grid. Assumes a symmetric grid, only half of
+%  Legendre functions are stored.
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  nphi - the number of points in latitude discretization
+%  ntheta - the number of points in meridian discretization
+%       
+%  Output parameters:
+%       
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  whts - weights of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - initialized fftpack wsave array, complex *16 wsave(4*nphi+15)
+%
+%
+ctheta = zeros(ntheta,1);
+whts = zeros(ntheta,1);
+ynms = zeros((nterms+1)^2,ntheta/2+1);
+wsave = zeros(4*nphi+15,1)+1i*zeros(4*nphi+15,1);
+
+# FORTRAN sphtrans_cmpl_cheb_init(int[] nterms, int[] nphi, int[] ntheta, inout double[] ctheta, inout double[] whts, inout double[] ynms, inout dcomplex[] wsave);
+
+
+@function [ctheta,whts,ynms,wsave]=sphtrans_real_lege_init(nterms,nphi,ntheta)
+%
+%  Precompute parameters and tables for O(p^3) real spherical transforms
+%  on Legendre spherical grid. Assumes a symmetric grid, only half of
+%  Legendre functions are stored.
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  nphi - the number of points in latitude discretization
+%  ntheta - the number of points in meridian discretization
+%       
+%  Output parameters:
+%       
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  whts - weights of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - initialized fftpack wsave array, complex *16 wsave(4*nphi+15)
+%
+%
+ctheta = zeros(ntheta,1);
+whts = zeros(ntheta,1);
+ynms = zeros((nterms+1)^2,ntheta/2+1);
+wsave = zeros(4*nphi+15,1)+1i*zeros(4*nphi+15,1);
+
+# FORTRAN sphtrans_real_lege_init(int[] nterms, int[] nphi, int[] ntheta, inout double[] ctheta, inout double[] whts, inout double[] ynms, inout dcomplex[] wsave);
+
+
+@function [ctheta,whts,ynms,wsave]=sphtrans_real_cheb_init(nterms,nphi,ntheta)
+%
+%  Precompute parameters and tables for O(p^3) real spherical transforms
+%  on Chebychev spherical grid. Assumes a symmetric grid, only half of
+%  Legendre functions are stored.
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  nphi - the number of points in latitude discretization
+%  ntheta - the number of points in meridian discretization
+%       
+%  Output parameters:
+%       
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  whts - weights of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - initialized fftpack wsave array, complex *16 wsave(4*nphi+15)
+%
+%
+ctheta = zeros(ntheta,1);
+whts = zeros(ntheta,1);
+ynms = zeros((nterms+1)^2,ntheta/2+1);
+wsave = zeros(4*nphi+15,1)+1i*zeros(4*nphi+15,1);
+
+# FORTRAN sphtrans_real_cheb_init(int[] nterms, int[] nphi, int[] ntheta, inout double[] ctheta, inout double[] whts, inout double[] ynms, inout dcomplex[] wsave);
+
+
+@function fgrid=sphtrans_cmpl(nterms,mpole,nphi,ntheta,ctheta,ynms,wsave)
+%
+%  Complex valued O(p^3) spherical transform on a spherical grid. 
+%  Assumes a symmetric grid, only half of Legendre functions are stored.
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  mpole - the coefficients of spherical harmonics expansion,
+%               complex*16 (0:nterms,-nterms:nterms)
+%  nphi - the number of points in latitude discretization
+%  ntheta - the number of points in meridian discretization
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - fftpack wsave array, complex *16 wsave(4*nphi+15)
+%       
+%  Output parameters:
+%
+%  fgrid - function values on the grid, NPHI-by-NTHETA complex*16 matrix
+%
+fgrid = zeros(nphi,ntheta)+1i*zeros(nphi,ntheta);
+
+# FORTRAN sphtrans_cmpl(int[] nterms, dcomplex[] mpole, int[] nphi, int[] ntheta, inout dcomplex[] fgrid, double[] ctheta, double[] ynms, dcomplex[] wsave);
+
+
+@function fgrid=sphtrans_real(nterms,mpole,nphi,ntheta,ctheta,ynms,wsave)
+%
+%  Real valued O(p^3) spherical transform on a spherical grid. 
+%  Assumes a symmetric grid, only half of Legendre functions are stored.
+%  No aliasing (nphi >= 2*nterms+1)
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  mpole - the coefficients of spherical harmonics expansion,
+%               complex*16 (0:nterms,0:nterms)
+%  nphi - the number of points in latitude discretization
+%  ntheta - the number of points in meridian discretization
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - fftpack wsave array, complex *16 wsave(4*nphi+15)
+%       
+%  Output parameters:
+%
+%  fgrid - function values on the grid, NPHI-by-NTHETA real*8 matrix
+%
+fgrid = zeros(nphi,ntheta);
+
+# FORTRAN sphtrans_real(int[] nterms, dcomplex[] mpole, int[] nphi, int[] ntheta, inout double[] fgrid, double[] ctheta, double[] ynms, dcomplex[] wsave);
+
+
+
+@function mpole=sphtrans_fwd_cmpl(nterms,nphi,ntheta,fgrid,ctheta,whts,ynms,wsave)
+%
+%  Complex valued O(p^3) forward spherical transform on a spherical grid. 
+%  Assumes a symmetric grid, only half of Legendre functions are stored.
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  nphi - the number of points in latitude discretization
+%  ntheta - the number of points in meridian discretization
+%  fgrid - function values on the grid, NPHI-by-NTHETA complex*16 matrix
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  whts - weights of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - fftpack wsave array, complex *16 wsave(4*nphi+15)
+%       
+%  Output parameters:
+%
+%  mpole - the coefficients of spherical harmonics expansion,
+%               complex*16 (0:nterms,-nterms:nterms)
+%
+mpole = zeros(nterms+1,2*nterms+1)+1i*zeros(nterms+1,2*nterms+1);
+
+# FORTRAN sphtrans_fwd_cmpl(int[] nterms, inout dcomplex[] mpole, int[] nphi, int[] ntheta, dcomplex[] fgrid, double[] ctheta, double[] whts, double[] ynms, dcomplex[] wsave);
+
+
+@function mpole=sphtrans_fwd_real(nterms,nphi,ntheta,fgrid,ctheta,whts,ynms,wsave)
+%
+%  Real valued O(p^3) forward spherical transform on a spherical grid. 
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  nphi - the number of points in latitude discretization
+%  ntheta - the number of points in meridian discretization
+%  fgrid - function values on the grid, NPHI-by-NTHETA real*8 matrix
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  whts - weights of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta)
+%  wsave - fftpack wsave array, complex *16 wsave(4*nphi+15)
+%       
+%  Output parameters:
+%
+%  mpole - the coefficients of spherical harmonics expansion,
+%               complex*16 (0:nterms,0:nterms)
+%
+mpole = zeros(nterms+1,nterms+1)+1i*zeros(nterms+1,nterms+1);
+
+# FORTRAN sphtrans_fwd_real(int[] nterms, inout dcomplex[] mpole, int[] nphi, int[] ntheta, double[] fgrid, double[] ctheta, double[] whts, double[] ynms, dcomplex[] wsave);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+@function [rotmat]=rotgrid_fsr_cmpl_init(nterms,nbeta,beta)
+%ROTGRID_FSR_CMPL_INIT Initialize rotgrid_fsr_cmpl.
+%
+%  Fast, FFT-based algorithm for rotating complex spherical harmonic grids
+%  into pole locations (beta_j, alpha_k), 
+%  where alpha_k = 2*pi * k/nrot, k=0..nrot-1, beta_j=1..nbeta
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  nbeta - the number of points in pole location meridian discretization
+%  beta - angles for new pole locations beta_j, j=1..nbeta
+%
+%  Output parameters:
+%
+%  rotmat - The rotation operators for directions (beta_j,0). 
+
+rotmat=zeros((nterms+1)*(2*nterms+1)*(2*nterms+1),nbeta);
+
+# FORTRAN rotgrid_fsr_cmpl_init(int[] nterms, int[] nbeta, double[] beta, inout double[] rotmat);
+
+
+@function grids=rotgrid_fsr_cmpl(nterms,mpole,nphi,ntheta,nbeta,beta,nrot,rotmat,ctheta,ynms,wsave)
+%ROTGRID_FSR_CMPL Rotate the complex spherical harmonic grids.
+%
+%  Fast, FFT-based algorithm for rotating complex spherical harmonic grids
+%  (dimensioned NPHI-by-NTHETA) into new pole locations (beta_j, alpha_k), 
+%  where alpha_k = 2*pi * k/nrot, k=0..nrot-1,  beta_j, j=1..nbeta. 
+%
+%  GRIDS = rotgrid_fsr_cmpl(NTERMS,MPOLE,NPHI,NTHETA,NBETA,BETA,NROT,...
+%       ROTMAT,CTHETA,YNMS,WSAVE) rotates 
+%  the complex spherical harmonics expansion of degree NTERMS 
+%  about the z-axis by degree ALPHA_K and about the y-axis by degree BETA.
+%  into a collection of new pole locations (beta_j, alpha_k) in spherical 
+%  coordinates (theta, phi), where alpha_k = 2*pi * k/nrot, k=0..nrot-1,
+%  beta_j, j=1..nbeta.
+%
+%  The rotated poles form a uniformly spaced grid on lattitude \theta.
+%
+%  grids - function values on the rotated grids, 
+%             NPHI-by-NTHETA-by-NROT-by-NBETA complex*16 matrix
+%
+%       Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  mpole - the coefficients of spherical harmonics expansion,
+%                    complex*16 (0:nterms,-nterms:nterms)
+%  nphi - the number of points in latitude discretization (for spherical grid)
+%  ntheta - the number of points in meridian discretization (for spherical grid)
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - fftpack wsave array, complex *16 wsave(4*nphi+15)
+%
+%  nbeta - the number of points in pole location meridian discretization
+%  beta - angles for new pole locations beta_j, j=1..nbeta
+%  nrot - angles for new pole locations alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%       
+%  rotmat - The rotation operators for directions (beta_j,0). 
+%
+%  [rotmat] must be initialized via 
+%              a preceding call to rotgrid_fsr_cmpl_init
+%  [ctheta, ynms, wsave] must be initialized via 
+%      a preceding call to sphtrans_cmpl_lege_init or sphtrans_cmpl_cheb_init
+%
+%       Output parameters:
+%
+%  grids - function values on the rotated grids, 
+%             NPHI-by-NTHETA-by-NROT-by-NBETA complex*16 matrix
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+grids=zeros(nphi*ntheta,nrot*nbeta)+1i*zeros(nphi*ntheta,nrot*nbeta);
+
+# FORTRAN rotgrid_fsr_cmpl(int[] nterms, dcomplex[] mpole, int[] nphi, int[] ntheta, int[] nbeta, double[] beta, int[] nrot, inout dcomplex[] grids, double[] rotmat, double[] ctheta, double[] ynms, dcomplex[] wsave);
+
+
+@function grids=rotgrid_dsr_cmpl(nterms,mpole,nphi,ntheta,nbeta,beta,nrot,rotmat,ctheta,ynms,wsave)
+%ROTGRID_DSR_CMPL Rotate the complex spherical harmonic grids.
+%
+%  Fast, direct algorithm for rotating complex spherical harmonic grids
+%  (dimensioned NPHI-by-NTHETA) into new pole locations (beta_j, alpha_k), 
+%  where alpha_k = 2*pi * k/nrot, k=0..nrot-1,  beta_j, j=1..nbeta. 
+%
+%  GRIDS = rotgrid_fsr_cmpl(NTERMS,MPOLE,NPHI,NTHETA,NBETA,BETA,NROT,...
+%       ROTMAT,CTHETA,YNMS,WSAVE) rotates 
+%  the complex spherical harmonics expansion of degree NTERMS 
+%  about the z-axis by degree ALPHA_K and about the y-axis by degree BETA.
+%  into a collection of new pole locations (beta_j, alpha_k) in spherical 
+%  coordinates (theta, phi), where alpha_k = 2*pi * k/nrot, k=0..nrot-1,
+%  beta_j, j=1..nbeta.
+%
+%  The rotated poles form a uniformly spaced grid on lattitude \theta.
+%
+%  grids - function values on the rotated grids, 
+%             NPHI-by-NTHETA-by-NROT-by-NBETA complex*16 matrix
+%
+%       Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  mpole - the coefficients of spherical harmonics expansion,
+%                    complex*16 (0:nterms,-nterms:nterms)
+%  nphi - the number of points in latitude discretization (for spherical grid)
+%  ntheta - the number of points in meridian discretization (for spherical grid)
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - fftpack wsave array, complex *16 wsave(4*nphi+15)
+%
+%  nbeta - the number of points in pole location meridian discretization
+%  beta - angles for new pole locations beta_j, j=1..nbeta
+%  nrot - angles for new pole locations alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%       
+%  rotmat - The rotation operators for directions (beta_j,0). 
+%
+%  [rotmat] must be initialized via 
+%              a preceding call to rotgrid_fsr_cmpl_init
+%  [ctheta, ynms, wsave] must be initialized via 
+%      a preceding call to sphtrans_cmpl_lege_init or sphtrans_cmpl_cheb_init
+%
+%       Output parameters:
+%
+%  grids - function values on the rotated grids, 
+%             NPHI-by-NTHETA-by-NROT-by-NBETA complex*16 matrix
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+grids=zeros(nphi*ntheta,nrot*nbeta)+1i*zeros(nphi*ntheta,nrot*nbeta);
+
+# FORTRAN rotgrid_dsr_cmpl(int[] nterms, dcomplex[] mpole, int[] nphi, int[] ntheta, int[] nbeta, double[] beta, int[] nrot, inout dcomplex[] grids, double[] rotmat, double[] ctheta, double[] ynms, dcomplex[] wsave);
+
+
+@function [rotmat]=rotgrid_fsr_real_init(nterms,nbeta,beta)
+%ROTGRID_FSR_REAL_INIT Initialize rotgrid_fsr_real.
+%
+%  Fast, FFT-based algorithm for rotating real spherical harmonic grids
+%  into pole locations (beta_j, alpha_k), 
+%  where alpha_k = 2*pi * k/nrot, k=0..nrot-1, beta_j=1..nbeta
+%
+%  Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  nbeta - the number of points in pole location meridian discretization
+%  beta - angles for new pole locations beta_j, j=1..nbeta
+%
+%  Output parameters:
+%
+%  rotmat - The rotation operators for directions (beta_j,0). 
+
+rotmat=zeros((nterms+1)*(2*nterms+1)*(2*nterms+1),nbeta);
+
+# FORTRAN rotgrid_fsr_real_init(int[] nterms, int[] nbeta, double[] beta, inout double[] rotmat);
+
+
+@function grids=rotgrid_fsr_real(nterms,mpole,nphi,ntheta,nbeta,beta,nrot,rotmat,ctheta,ynms,wsave)
+%ROTGRID_FSR_REAL Rotate the real spherical harmonic grids.
+%
+%  Fast, FFT-based algorithm for rotating real spherical harmonic grids
+%  (dimensioned NPHI-by-NTHETA) into new pole locations (beta_j, alpha_k), 
+%  where alpha_k = 2*pi * k/nrot, k=0..nrot-1,  beta_j, j=1..nbeta. 
+%
+%  GRIDS = rotgrid_fsr_real(NTERMS,MPOLE,NPHI,NTHETA,NBETA,BETA,NROT,...
+%       ROTMAT,CTHETA,YNMS,WSAVE) rotates 
+%  the real spherical harmonics expansion of degree NTERMS 
+%  about the z-axis by degree ALPHA_K and about the y-axis by degree BETA.
+%  into a collection of new pole locations (beta_j, alpha_k) in spherical 
+%  coordinates (theta, phi), where alpha_k = 2*pi * k/nrot, k=0..nrot-1,
+%  beta_j, j=1..nbeta.
+%
+%  The rotated poles form a uniformly spaced grid on lattitude \theta.
+%
+%  grids - function values on the rotated grids, 
+%             NPHI-by-NTHETA-by-NROT-by-NBETA real*8 matrix
+%
+%      Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  mpole - the coefficients of spherical harmonics expansion,
+%                    complex*16 (0:nterms,0:nterms)
+%  nphi - the number of points in latitude discretization (for spherical grid)
+%  ntheta - the number of points in meridian discretization (for spherical grid)
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - fftpack wsave array, complex *16 wsave(4*nphi+15)
+%
+%  nbeta - the number of points in pole location meridian discretization
+%  beta - angles for new pole locations beta_j, j=1..nbeta
+%  nrot - angles for new pole locations alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%       
+%  rotmat - The rotation operators for directions (beta_j,0). 
+% 
+%  [rotmat] must be initialized via 
+%              a preceding call to rotgrid_fsr_real_init
+%  [ctheta, ynms, wsave] must be initialized via 
+%      a preceding call to sphtrans_real_lege_init or sphtrans_real_cheb_init
+%
+%      Output parameters:
+%
+%  grids - function values on the rotated grids, 
+%             NPHI-by-NTHETA-by-NROT-by-NBETA real*8 matrix
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+grids=zeros(nphi*ntheta,nrot*nbeta);
+
+# FORTRAN rotgrid_fsr_real(int[] nterms, dcomplex[] mpole, int[] nphi, int[] ntheta, int[] nbeta, double[] beta, int[] nrot, inout double[] grids, double[] rotmat, double[] ctheta, double[] ynms, dcomplex[] wsave);
+
+
+@function grids=rotgrid_dsr_real(nterms,mpole,nphi,ntheta,nbeta,beta,nrot,rotmat,ctheta,ynms,wsave)
+%ROTGRID_FSR_REAL Rotate the real spherical harmonic grids.
+%
+%  Fast, direct algorithm for rotating real spherical harmonic grids
+%  (dimensioned NPHI-by-NTHETA) into new pole locations (beta_j, alpha_k), 
+%  where alpha_k = 2*pi * k/nrot, k=0..nrot-1,  beta_j, j=1..nbeta. 
+%
+%  GRIDS = rotgrid_fsr_real(NTERMS,MPOLE,NPHI,NTHETA,NBETA,BETA,NROT,...
+%       ROTMAT,CTHETA,YNMS,WSAVE) rotates 
+%  the real spherical harmonics expansion of degree NTERMS 
+%  about the z-axis by degree ALPHA_K and about the y-axis by degree BETA.
+%  into a collection of new pole locations (beta_j, alpha_k) in spherical 
+%  coordinates (theta, phi), where alpha_k = 2*pi * k/nrot, k=0..nrot-1,
+%  beta_j, j=1..nbeta.
+%
+%  The rotated poles form a uniformly spaced grid on lattitude \theta.
+%
+%  grids - function values on the rotated grids, 
+%             NPHI-by-NTHETA-by-NROT-by-NBETA real*8 matrix
+%
+%      Input parameters:
+%
+%  nterms - the number of terms in spherical harmonics expansion
+%  mpole - the coefficients of spherical harmonics expansion,
+%                    complex*16 (0:nterms,0:nterms)
+%  nphi - the number of points in latitude discretization (for spherical grid)
+%  ntheta - the number of points in meridian discretization (for spherical grid)
+%  ctheta - cos(theta) of meridian discretization angles, real*8 ntheta
+%  ynms - Legendre functions, real *8 ynms(0:nterms,0:nterms,ntheta/2+1)
+%  wsave - fftpack wsave array, complex *16 wsave(4*nphi+15)
+%
+%  nbeta - the number of points in pole location meridian discretization
+%  beta - angles for new pole locations beta_j, j=1..nbeta
+%  nrot - angles for new pole locations alpha_k = 2*pi * k/nrot, k=0..nrot-1.
+%       
+%  rotmat - The rotation operators for directions (beta_j,0). 
+% 
+%  [rotmat] must be initialized via 
+%              a preceding call to rotgrid_fsr_real_init
+%  [ctheta, ynms, wsave] must be initialized via 
+%      a preceding call to sphtrans_real_lege_init or sphtrans_real_cheb_init
+%
+%      Output parameters:
+%
+%  grids - function values on the rotated grids, 
+%             NPHI-by-NTHETA-by-NROT-by-NBETA real*8 matrix
+%
+%  Our definition of complex spherical harmonics is
+%
+%  Ynm(theta,phi)= sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(im phi), 
+%  Yn,-m(theta,phi) = sqrt( 2n+1) sqrt((n-m)!/(n+m)!) 
+%                  Pnm(cos theta) e^(-im phi),   for m >= 0.
+%       
+%  Note that we do not include the Condon-Shortley phase (-1)^m, if m<0.
+%
+
+grids=zeros(nphi*ntheta,nrot*nbeta);
+
+# FORTRAN rotgrid_dsr_real(int[] nterms, dcomplex[] mpole, int[] nphi, int[] ntheta, int[] nbeta, double[] beta, int[] nrot, inout double[] grids, double[] rotmat, double[] ctheta, double[] ynms, dcomplex[] wsave);
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+@function fmodes=rotgrid_cmpl_init(nphi,phi,ntheta,theta,fgrid)
+fmodes = zeros(nphi,ntheta)+1i*zeros(nphi,ntheta);
+
+# FORTRAN rotgridi(int[] nphi, double[] phi, int[] ntheta, double[] theta, dcomplex[] fgrid, inout dcomplex[] fmodes);
+
+
+@function fmodes=rotgrid_real_init(nphi,phi,ntheta,theta,fgrid)
+fmodes = zeros(nphi,ntheta)+1i*zeros(nphi,ntheta);
+
+# FORTRAN rotgridi_real(int[] nphi, double[] phi, int[] ntheta, double[] theta, double[] fgrid, inout dcomplex[] fmodes);
+
+
+@function grids=rotgrid_cmpl(nphi,phi,ntheta,theta,fmodes,ngrid,xgrid,ygrid,zgrid)
+%ROTGRID: Fast rotation of a grid by nphi uniformly spaced angles.
+%
+%  Fast rotation of the user-defined grid (xgrid,ygrid,zgrid).
+%  This function constructs a set of grids, obtained by rotating 
+%  the original grid by nphi uniformly spaced angles phi.
+%
+%  The output is NGRID-by-NPHI complex matrix, containing the rotated grids.
+%
+%
+%  Input parameters:
+%
+%  nphi - the number of points in lattitude discretization
+%  phi - lattitude discretization angles
+%  ntheta - the number of points in big circle discretization
+%  theta - big circle discretization angles
+%  fmodes - Fourier modes, NPHI-by-NTHETA complex matrix
+%  ngrid - the number of points in the user-defined grid
+%  xgrid - the x-coordinates of the grid
+%  ygrid - the y-coordinates of the grid
+%  zgrid - the z-coordinates of the grid
+%
+%  Output parameters:
+%
+%  grids - function values at rotated grids, NGRID-by-NPHI complex matrix
+%
+
+grids = zeros(ngrid,nphi)+1i*zeros(ngrid,nphi);
+
+# FORTRAN rotgrid(int[] nphi, double[] phi, int[] ntheta, double[] theta, dcomplex[] fmodes, int[] ngrid, double[] xgrid, double[] ygrid, double[] zgrid, inout dcomplex[] grids);
+
+
+@function grids=rotgrid_cmpl_opt(nphi,phi,ntheta,theta,fmodes,ngrid,xgrid,ygrid,zgrid)
+%ROTGRID_CMPL_OPT: Fast rotation of a grid by nphi uniformly spaced angles.
+%
+%  Fast rotation of the user-defined grid (xgrid,ygrid,zgrid).
+%  This function constructs a set of grids, obtained by rotating 
+%  the original grid by nphi uniformly spaced angles phi.
+%
+%  The output is NGRID-by-NPHI complex matrix, containing the rotated grids.
+%
+%  Optimized for symmetric spherical grid, nphi is even, ngrid = nphi*ntheta
+%  Note, this routine does not work for arbitrary grids, use rotgrid.
+%
+%  Input parameters:
+%
+%  nphi - the number of points in lattitude discretization
+%  phi - lattitude discretization angles
+%  ntheta - the number of points in big circle discretization
+%  theta - big circle discretization angles
+%  fmodes - Fourier modes, NPHI-by-NTHETA complex matrix
+%  ngrid - the number of points in the user-defined grid, see note above
+%  xgrid - the x-coordinates of the grid
+%  ygrid - the y-coordinates of the grid
+%  zgrid - the z-coordinates of the grid
+%
+%  Output parameters:
+%
+%  grids - function values at rotated grids, NGRID-by-NPHI complex matrix
+%
+
+grids = zeros(ngrid,nphi)+1i*zeros(ngrid,nphi);
+
+# FORTRAN rotgrid_opt(int[] nphi, double[] phi, int[] ntheta, double[] theta, dcomplex[] fmodes, int[] ngrid, double[] xgrid, double[] ygrid, double[] zgrid, inout dcomplex[] grids);
+
+
+@function grids=rotgrid_cmpl_opt_vec(nphi,phi,ntheta,theta,fmodes,ngrid,nlat,xgrid,ygrid,zgrid)
+%ROTGRID_CMPL_OPT_VEC: Fast rotation of a grid by nphi uniformly spaced angles.
+%
+%  Fast rotation of the user-defined grid (xgrid,ygrid,zgrid).
+%  This function constructs a set of grids, obtained by rotating 
+%  the original grid by nphi uniformly spaced angles phi.
+%
+%  The output is NGRID-by-NPHI-by-NLAT complex matrix, 
+%  containing the rotated grids.
+%
+%  Optimized for symmetric spherical grid, nphi is even, ngrid = nphi*ntheta
+%  Note, this routine does not work for arbitrary grids, use rotgrid.
+%
+%  Input parameters:
+%
+%  nphi - the number of points in lattitude discretization
+%  phi - lattitude discretization angles
+%  ntheta - the number of points in big circle discretization
+%  theta - big circle discretization angles
+%  fmodes - Fourier modes, NPHI-by-NTHETA complex matrix
+%  ngrid - the number of points in the user-defined grid, see note above
+%  nlat - the number latitudes/grids
+%  xgrid - the x-coordinates of the grid, NGRID-by-NLAT
+%  ygrid - the y-coordinates of the grid, NGRID-by-NLAT
+%  zgrid - the z-coordinates of the grid, NGRID-by-NLAT
+%
+%  Output parameters:
+%
+%  grids - function values at rotated grids, 
+%             NGRID-by-NPHI-by-NLAT complex matrix
+%
+
+grids = zeros(ngrid,nphi,nlat)+1i*zeros(ngrid,nphi,nlat);
+
+# FORTRAN rotgrid_opt_vec(int[] nphi, double[] phi, int[] ntheta, double[] theta, dcomplex[] fmodes, int[] ngrid, int[] nlat, double[] xgrid, double[] ygrid, double[] zgrid, inout dcomplex[] grids);
+
+
+@function grids=rotgrid_real(nphi,phi,ntheta,theta,fmodes,ngrid,xgrid,ygrid,zgrid)
+%ROTGRID_REAL: Fast rotation of a grid by nphi uniformly spaced angles.
+%
+%  Fast rotation of the user-defined grid (xgrid,ygrid,zgrid).
+%  This function constructs a set of grids, obtained by rotating 
+%  the original grid by nphi uniformly spaced angles phi.
+%
+%  The output is NGRID-by-NPHI real matrix, containing the rotated grids.
+%
+%
+%  Input parameters:
+%
+%  nphi - the number of points in lattitude discretization
+%  phi - lattitude discretization angles
+%  ntheta - the number of points in big circle discretization
+%  theta - big circle discretization angles
+%  fmodes - Fourier modes, NPHI-by-NTHETA complex matrix
+%  ngrid - the number of points in the user-defined grid
+%  xgrid - the x-coordinates of the grid
+%  ygrid - the y-coordinates of the grid
+%  zgrid - the z-coordinates of the grid
+%
+%  Output parameters:
+%
+%  grids - function values at rotated grids, NGRID-by-NPHI real matrix
+%
+
+grids = zeros(ngrid,nphi);
+
+# FORTRAN rotgrid_real(int[] nphi, double[] phi, int[] ntheta, double[] theta, dcomplex[] fmodes, int[] ngrid, double[] xgrid, double[] ygrid, double[] zgrid, inout double[] grids);
+
+
+@function grids=rotgrid_real_opt(nphi,phi,ntheta,theta,fmodes,ngrid,xgrid,ygrid,zgrid)
+%ROTGRID_REAL_OPT: Fast rotation of a grid by nphi uniformly spaced angles.
+%
+%  Fast rotation of the user-defined grid (xgrid,ygrid,zgrid).
+%  This function constructs a set of grids, obtained by rotating 
+%  the original grid by nphi uniformly spaced angles phi.
+%
+%  The output is NGRID-by-NPHI real matrix, containing the rotated grids.
+%
+%  Optimized for symmetric spherical grid, nphi is even, ngrid = nphi*ntheta
+%  Note, this routine does not work for arbitrary grids, use rotgrid_real.
+%
+%  Input parameters:
+%
+%  nphi - the number of points in lattitude discretization
+%  phi - lattitude discretization angles
+%  ntheta - the number of points in big circle discretization
+%  theta - big circle discretization angles
+%  fmodes - Fourier modes, NPHI-by-NTHETA complex matrix
+%  ngrid - the number of points in the user-defined grid, see note above
+%  xgrid - the x-coordinates of the grid
+%  ygrid - the y-coordinates of the grid
+%  zgrid - the z-coordinates of the grid
+%
+%  Output parameters:
+%
+%  grids - function values at rotated grids, NGRID-by-NPHI real matrix
+%
+
+grids = zeros(ngrid,nphi);
+
+# FORTRAN rotgrid_real_opt(int[] nphi, double[] phi, int[] ntheta, double[] theta, dcomplex[] fmodes, int[] ngrid, double[] xgrid, double[] ygrid, double[] zgrid, inout double[] grids);
+
+
+@function grids=rotgrid_real_opt_vec(nphi,phi,ntheta,theta,fmodes,ngrid,nlat,xgrid,ygrid,zgrid)
+%ROTGRID_REAL_OPT_VEC: Fast rotation of a grid by nphi uniformly spaced angles.
+%
+%  Fast rotation of the user-defined grid (xgrid,ygrid,zgrid).
+%  This function constructs a set of grids, obtained by rotating 
+%  the original grid by nphi uniformly spaced angles phi.
+%
+%  The output is NGRID-by-NPHI-by-NLAT real matrix, 
+%  containing the rotated grids.
+%
+%  Optimized for symmetric spherical grid, nphi is even, ngrid = nphi*ntheta
+%  Note, this routine does not work for arbitrary grids, use rotgrid_real.
+%
+%  Input parameters:
+%
+%  nphi - the number of points in lattitude discretization
+%  phi - lattitude discretization angles
+%  ntheta - the number of points in big circle discretization
+%  theta - big circle discretization angles
+%  fmodes - Fourier modes, NPHI-by-NTHETA complex matrix
+%  ngrid - the number of points in the user-defined grid, see note above
+%  nlat - the number latitudes/grids
+%  xgrid - the x-coordinates of the grid, NGRID-by-NLAT
+%  ygrid - the y-coordinates of the grid, NGRID-by-NLAT
+%  zgrid - the z-coordinates of the grid, NGRID-by-NLAT
+%
+%  Output parameters:
+%
+%  grids - function values at rotated grids, NGRID-by-NPHI-by-NLAT real matrix
+%
+
+grids = zeros(ngrid,nphi,nlat);
+
+# FORTRAN rotgrid_real_opt_vec(int[] nphi, double[] phi, int[] ntheta, double[] theta, dcomplex[] fmodes, int[] ngrid, int[] nlat, double[] xgrid, double[] ygrid, double[] zgrid, inout double[] grids);
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+@function cii=shiftphase(cii,nii,nphi,pii)
+%SHIFTPHASE: Apply a phase shift to each row
+%
+%   cii=SHIFTPHASE(cii,nii,nphi,pii);
+%
+%    cii(i,:) = cii(i,:) .* exp(+1i*(-nphi/2:(nphi-1)/2)*pii(i));
+%
+%  Input parameters:
+%
+%     cii     Fourier coefficients, 
+%             dimensioned as (nii,nphi) array (complex *16)
+%     pii     Phase factors for each row (nii) (real *8)     
+%                 
+%  Output parameters:
+%
+%     cii     Fourier coefficients (complex *16)
+%
+%
+
+# FORTRAN shiftphase(inout dcomplex[] cii, int[1] nii, int[1] nphi, double[] pii);
+
+
+@function [x,w,u,v]=legeexps(n)
+%LEGEEXPS Gauss-Legendre quadrature on the interval [-1,1].
+%
+%  This subroutine constructs the gaussian nodes on the interval [-1,1],
+%  and the weights for the corresponding order n quadrature. it also
+%  constructs the matrix v converting the coefficients of a legendre
+%  expansion into its values at the n gaussian nodes, and its inverse u,
+%  converting the values of a function at n gaussian nodes into the
+%  coefficients of the corresponding legendre series.  No attempt has
+%  been made to make this code efficient, but its speed is normally
+%  sufficient.
+%
+%  X = LEGEEXPS(N) returns the nodes of the Gauss-Legendre quadrature rule
+%
+%  [X,W] = LEGEEXPS(N) returns the nodes and weigths of the Gauss-Legendre 
+%  quadrature rule
+%
+%  [X,W,U,V] = LEGEEXPS(N) returns the nodes, weigths and conversion matrices
+%  of the Gauss-Legendre quadrature rule
+%
+%  Input parameters:
+%
+%  N - the number of gaussian nodes and weights to be generated.
+%  
+%  Output parameters:
+%
+%  X - the order n gaussian nodes.
+%  W - the corresponding quadrature weights.
+%  U - the n*n matrix converting the  values at of a polynomial of order
+%         n-1 at n legendre nodes into the coefficients of its 
+%         legendre expansion.
+%  V - the n*n matrix converting the coefficients
+%         of an n-term legendre expansion into its values at
+%         n legendre nodes (note that v is the inverse of u).
+%
+
+x=zeros(1,n);
+w=zeros(1,n);
+u=zeros(n,n);
+v=zeros(n,n);
+
+itype=0;
+if( nargout == 1 ) itype=0; end;
+if( nargout == 2 ) itype=1; end;
+if( nargout == 3 ) itype=2; end;
+if( nargout == 4 ) itype=2; end;
+
+# FORTRAN legeexps(int[1] itype, int[1] n, double[n] x, double[n,n] u, double[n,n] v, double[n] w); 
+
+
+@function [pol,der]=legepol(x,n)
+
+pol=0;
+der=0;
+# FORTRAN legepol(double[1] x, int[1] n, double[1] pol, double[1] der); 
+
+
+
+@function pols=legepols(x,n)
+
+n1=n+1;
+pols=zeros(n1,1);
+
+# FORTRAN legepols(double[1] x, int[1] n, double[n1] pols); 
+
+
+
+@function [amatr,ts]=legematrin(n,m,xs)
+%LEGEMATRIN Interpolation matrix for Gauss-Legendre nodes.
+%
+%  This subroutine constructs the matrix interpolating
+%  functions from the n-point Gaussian grid on the interval [-1,1]
+%  to an arbitrary m-point grid (the nodes of the latter are user-provided).
+%
+%  AMATR = LEGEMATRIN(N,M,XS) 
+%
+%  Input parameters:
+%
+%  N - the number of gaussian nodes and weights to be generated.
+%  XS - the points at which the function is to be interpolated.
+%  
+%  Output parameters:
+%
+%  TS - the order n gaussian nodes.
+%
+
+ts=zeros(n,1);
+amatr=zeros(m,n);
+
+w=zeros(2*n*n+n+100,1);
+
+# FORTRAN lematrin(int[1] n, int[1] m, double[] xs, inout double[] amatr, inout double[] ts, inout double[] w); 
+
+
+
+@function [x,w,u,v]=chebexps(n)
+%CHEBEXPS Chebychev quadrature on the interval [-1,1].
+%
+%  This subroutine constructs the chebychev nodes on the interval [-1,1],
+%  and the weights for the corresponding order n quadrature. it also
+%  constructs the matrix v converting the coefficients of a chebychev
+%  expansion into its values at the n chebychev nodes, and its inverse u,
+%  converting the values of a function at n chebychev nodes into the
+%  coefficients of the corresponding chebychev series.  No attempt has
+%  been made to make this code efficient, but its speed is normally
+%  sufficient.
+%
+%  X = CHEBEXPS(N) returns the nodes of the Chebychev quadrature rule
+%
+%  [X,W] = CHEBEXPS(N) returns the nodes and weigths of the Chebychev 
+%  quadrature rule
+%
+%  [X,W,U,V] = CHEBEXPS(N) returns the nodes, weigths and conversion matrices
+%  of the Chebychev quadrature rule
+%
+%  Input parameters:
+%
+%  N - the number of chebychev nodes and weights to be generated.
+%  
+%  Output parameters:
+%
+%  X - the order n chebychev nodes.
+%  W - the corresponding quadrature weights.
+%  U - the n*n matrix converting the  values at of a polynomial of order
+%         n-1 at n chebychev nodes into the coefficients of its 
+%         chebychev expansion.
+%  V - the n*n matrix converting the coefficients
+%         of an n-term chebychev expansion into its values at
+%         n chebychev nodes (note that v is the inverse of u).
+%
+
+x=zeros(1,n);
+w=zeros(1,n);
+u=zeros(n,n);
+v=zeros(n,n);
+
+itype=0;
+if( nargout == 1 ) itype=0; end;
+if( nargout == 2 ) itype=1; end;
+if( nargout == 3 ) itype=2; end;
+if( nargout == 4 ) itype=2; end;
+
+# FORTRAN chebexps(int[1] itype, int[1] n, double[n] x, double[n,n] u, double[n,n] v, double[n] w); 
+
+
+@function [amatr,ts]=chebmatrin(n,m,xs)
+%CHEBMATRIN Interpolation matrix for Chebychev nodes.
+%
+%  This subroutine constructs the matrix interpolating
+%  functions from the n-point chebychev grid on the interval [-1,1]
+%  to an arbitrary m-point grid (the nodes of the latter are user-provided).
+%
+%  AMATR = CHEBMATRIN(N,M,XS) 
+%
+%  Input parameters:
+%
+%  N - the number of chebychev nodes and weights to be generated.
+%  XS - the points at which the function is to be interpolated.
+%  
+%  Output parameters:
+%
+%  TS - the order n chebychev nodes.
+%
+
+ts=zeros(n,1);
+amatr=zeros(m,n);
+
+w=zeros(2*n*n+n+100,1);
+
+# FORTRAN chematrin(int[1] n, int[1] m, double[] xs, inout double[] amatr, inout double[] ts, inout double[] w); 
+
+
+@function [pol,der]=chebpol(x,n)
+
+pol=0;
+der=0;
+# FORTRAN chebpol(double[1] x, int[1] n, inout double[1] pol, inout double[1] der); 
+
+
+
+@function pols=chebpols(x,n)
+
+n1=n+1;
+pols=zeros(n1,1);
+
+# FORTRAN chebpols(double[1] x, int[1] n, inout double[n1] pols); 
+
+
+
+@function [t,w] = gaussq(kind,n,alpha,beta,kpts,endpts)
+
+b = zeros(n,1);
+t = zeros(n,1);
+w = zeros(n,1);
+
+# FORTRAN gaussq(int[1] kind, int[1] n, double[1] alpha, double[1] beta, int[1] kpts, double[2] endpts, inout double[] b, inout double[] t, inout double[] w);
+
+
+@function next235=fftnext235(n)
+%FFTNEXT235 Returns the next multiple of 2, 3, and 5.
+%
+%  next235=fftnext235(n) returns the next integer that 
+%                     is a multiple of 2, 3, and 5.
+%
+next235 = n;
+# FORTRAN fftnext235(int[1] n, inout int[1] next235);
+
