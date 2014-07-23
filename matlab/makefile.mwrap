@@ -34,7 +34,7 @@ include mwrap.inc
 
 # SOURCE FILE LIST
 #
-vpath %.f .:./src:../nufft1d:../nufft2d
+vpath %.f .:../src:../nufft1d:../nufft2d
 
 FSRCS = rotproj_cmpl.f rotviarecur3.f \
         dfft.f fftnext.f yrecursion.f
