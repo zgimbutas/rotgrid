@@ -1,0 +1,2 @@
+cc This software is being released under a FreeBSD license
+cc (see license.txt in this directory). 
