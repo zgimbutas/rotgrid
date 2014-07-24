@@ -45,7 +45,7 @@ several lines above the shiftphase call.
 
 ====
 
-To run a simple test, please type
+To run a simple test, from the "tests" directory, please type
 
 'octave test_rotgrid.m'
 
