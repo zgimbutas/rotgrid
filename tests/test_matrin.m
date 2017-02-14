@@ -2,6 +2,11 @@
 % Test interpolation from Legendre to Chebychev nodes and back...
 %
 
+addpath '../matlab';
+addpath '../nufft1d';
+addpath '../nufft2d';
+
+
 n=12*2;
 
 [xc,wc]=chebexps(n);

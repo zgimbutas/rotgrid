@@ -1,6 +1,10 @@
 %  Testing routines for spherical transform algorithm
 %
 
+addpath '../matlab';
+addpath '../nufft1d';
+addpath '../nufft2d';
+
 
 nterms = 32
 mpole = zeros(nterms+1,2*nterms+1)+1i*zeros(nterms+1,2*nterms+1);

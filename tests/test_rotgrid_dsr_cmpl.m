@@ -4,6 +4,10 @@
 %  This function constructs a set of grids, obtained by rotating 
 %  the original grid by nphi uniformly spaced angles phi.
 
+addpath '../matlab';
+addpath '../nufft1d';
+addpath '../nufft2d';
+
 
 nterms = 12*4
 mpole = zeros(nterms+1,2*nterms+1)+1i*zeros(nterms+1,2*nterms+1);

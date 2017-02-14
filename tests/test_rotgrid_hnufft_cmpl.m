@@ -4,7 +4,7 @@
 %  This function constructs a set of grids, obtained by rotating 
 %  the original grid by nphi uniformly spaced angles phi.
 
-
+addpath '../matlab';
 addpath '../nufft1d';
 addpath '../nufft2d';
 
@@ -131,7 +131,7 @@ tic
 fmodes=rotgrid_init_dcheb(nphi,phi,ntheta,theta,fgrid);
 toc
 tic
-grids=rotgrid_opt(nphi,phi,ntheta,theta,fmodes,ngrid,xgrid,ygrid,zgrid);
+grids=rotgrid_cmpl_opt(nphi,phi,ntheta,theta,fmodes,ngrid,xgrid,ygrid,zgrid);
 toc
 
 
@@ -183,7 +183,7 @@ tic
 fmodes=rotgrid_init_dcheb(nphi,phi,ntheta,theta,fgrid);
 toc
 tic
-grids1=rotgrid_opt_vec(nphi,phi,ntheta,theta,fmodes,ngrid,ntheta1,xgrid,ygrid,zgrid);
+grids1=rotgrid_cmpl_opt_vec(nphi,phi,ntheta,theta,fmodes,ngrid,ntheta1,xgrid,ygrid,zgrid);
 toc
 grids1=reshape(grids1,ngrid,nphi,ntheta1);
 

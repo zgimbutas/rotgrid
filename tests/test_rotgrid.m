@@ -5,7 +5,6 @@
 %  the original grid by nphi uniformly spaced angles phi.
 
 addpath '../matlab';
-addpath '../src';
 addpath '../nufft1d';
 addpath '../nufft2d';
 

@@ -4,7 +4,7 @@
 %  This function constructs a set of grids, obtained by rotating 
 %  the original grid by nphi uniformly spaced angles phi.
 
-
+addpath '../matlab';
 addpath '../nufft1d';
 addpath '../nufft2d';
 

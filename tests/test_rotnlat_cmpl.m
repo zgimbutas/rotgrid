@@ -1,3 +1,7 @@
+addpath '../matlab';
+addpath '../nufft1d';
+addpath '../nufft2d';
+
 
 nterms = 48
 

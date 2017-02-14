@@ -6,7 +6,7 @@
 
 %  Test Chebychev grids.
 
-
+addpath '../matlab';
 addpath '../nufft1d';
 addpath '../nufft2d';
 
@@ -97,7 +97,7 @@ ngrid=size(xgrid,1)*size(xgrid,2)
 %
 tic
 fmodes=rotgrid_init_dcheb(nphi,phi,ntheta,theta,fgrid);
-grids=rotgrid_opt(nphi,phi,ntheta,theta,fmodes,ngrid,xgrid,ygrid,zgrid);
+grids=rotgrid_cmpl_opt(nphi,phi,ntheta,theta,fmodes,ngrid,xgrid,ygrid,zgrid);
 toc
 
 
