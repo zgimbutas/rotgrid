@@ -44,7 +44,7 @@ MEX_CC=   $(CXX)
 MW=mwrap
 MWFLAGS=-c99complex -mex	
 ###MEX_LIBS=-lm
-MEX_LIBS=-Wl,--no-undefined -lm -ldl
+MEX_LIBS=-Wl,--no-undefined -lgfortran -lm -ldl
 MEX_LINK=
 
 MEX_FLAGS=
@@ -69,7 +69,7 @@ MEX_CC=   $(CXX)
 MW=mwrap
 MWFLAGS=-c99complex -mex	
 ###MEX_LIBS=-lgomp -lm
-MEX_LIBS=-Wl,--no-undefined -lgomp -lm -ldl
+MEX_LIBS=-Wl,--no-undefined -lgfortran -lgomp -lm -ldl
 MEX_LINK=
 
 MEX_FLAGS=
@@ -82,8 +82,7 @@ endif
 ifeq ($(TARGET), octave-linux-intel)
 
 FFLAGS=-g -xT -O3 -ip -fPIC
-intel_libs="/opt/intel/fce/10.1.008/lib"
-intel_libs="/local/opt/intel/Compiler/11.1/064/lib/intel64"
+intel_prefix="/opt/intel/fce/10.1.008/lib"
 
 # Use the following for GNU Octave + gfortran 4.4.x
 TESTC99COMPLEX=test_c99_complex
@@ -109,9 +108,7 @@ endif
 ifeq ($(TARGET), octave-linux-intel-openmp)
 
 FFLAGS=-g -xT -O3 -ip -openmp -fPIC
-intel_libs="/opt/intel/fce/10.1.008/lib"
-intel_libs="/local/opt/intel/Compiler/11.1/064/lib/intel64"
-
+intel_prefix="/opt/intel/fce/10.1.008/lib"
 
 # Use the following for GNU Octave + gfortran 4.4.x
 TESTC99COMPLEX=test_c99_complex
