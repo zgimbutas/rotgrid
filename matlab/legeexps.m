@@ -45,7 +45,7 @@ if( nargout == 2 ) itype=1; end;
 if( nargout == 3 ) itype=2; end;
 if( nargout == 4 ) itype=2; end;
 
-mex_id_ = 'legeexps(i int[x], i int[x], i double[x], i double[xx], i double[xx], i double[x])';
-rotgrid_r2014a(mex_id_, itype, n, x, u, v, w, 1, 1, n, n, n, n, n, n);
+mex_id_ = 'legeexps(i int[x], i int[x], io double[x], io double[xx], io double[xx], io double[x])';
+[x, u, v, w] = rotgrid_r2014a(mex_id_, itype, n, x, u, v, w, 1, 1, n, n, n, n, n, n);
 
 

@@ -1347,14 +1347,14 @@ if( nargout == 2 ) itype=1; end;
 if( nargout == 3 ) itype=2; end;
 if( nargout == 4 ) itype=2; end;
 
-# FORTRAN legeexps(int[1] itype, int[1] n, double[n] x, double[n,n] u, double[n,n] v, double[n] w); 
+# FORTRAN legeexps(int[1] itype, int[1] n, inout double[n] x, inout double[n,n] u, inout double[n,n] v, inout double[n] w); 
 
 
 @function [pol,der]=legepol(x,n)
 
 pol=0;
 der=0;
-# FORTRAN legepol(double[1] x, int[1] n, double[1] pol, double[1] der); 
+# FORTRAN legepol(double[1] x, int[1] n, inout double[1] pol, inout double[1] der); 
 
 
 
@@ -1363,7 +1363,7 @@ der=0;
 n1=n+1;
 pols=zeros(n1,1);
 
-# FORTRAN legepols(double[1] x, int[1] n, double[n1] pols); 
+# FORTRAN legepols(double[1] x, int[1] n, inout double[n1] pols); 
 
 
 
@@ -1442,7 +1442,7 @@ if( nargout == 2 ) itype=1; end;
 if( nargout == 3 ) itype=2; end;
 if( nargout == 4 ) itype=2; end;
 
-# FORTRAN chebexps(int[1] itype, int[1] n, double[n] x, double[n,n] u, double[n,n] v, double[n] w); 
+# FORTRAN chebexps(int[1] itype, int[1] n, inout double[n] x, inout double[n,n] u, inout double[n,n] v, inout double[n] w); 
 
 
 @function [amatr,ts]=chebmatrin(n,m,xs)

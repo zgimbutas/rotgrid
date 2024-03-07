@@ -23,8 +23,8 @@ error=norm(a*b-eye(n,n))
 yc=sin(2*pi*xc);
 yg=sin(2*pi*xg);
 
-yg' - b*yc'
-yc' - a*yg'
+yg - b*yc
+yc - a*yg
 
 if( 1 == 2 ),
 theta = 2*pi*((1:n)-0.5)/n
